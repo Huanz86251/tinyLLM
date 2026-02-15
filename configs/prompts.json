@@ -1,0 +1,12 @@
+{
+  "gsm8k": {
+    "system": "Think step by step inside <|thought_start|> and <|thought_end|>. Then provide final answer.",
+    "suffix": "\nPut your final answer in LaTeX boxed form like $\\boxed{answer}$. ",
+    "source": "train/GRPO.py"
+  },
+  "arc": {
+    "system": "Think step by step inside <|thought_start|> and <|thought_end|>. Then provide final answer.",
+    "suffix": "\nPut your final answer in LaTeX boxed form like $\\boxed{answer}$.",
+    "source": "train/GRPO_ARC.py"
+  }
+}

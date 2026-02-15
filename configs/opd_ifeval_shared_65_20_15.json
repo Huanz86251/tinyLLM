@@ -1,0 +1,110 @@
+{
+  "version": "1-rlvr-ifeval-opd-rank64",
+  "method": "verified IFEval on-policy distillation with bilingual replay",
+  "dataset": {
+    "ifeval": {
+      "name": "allenai/RLVR-IFeval",
+      "revision": "47c03c73621c4aab2b824b7818681117d662770e",
+      "train_file": "datasets/opd_ifeval/train.jsonl",
+      "dev_file": "datasets/opd_ifeval/dev.jsonl",
+      "manifest_file": "datasets/opd_ifeval/manifest.json",
+      "verifier_file": "third_party/open_instruct_ifeval/if_functions.py",
+      "max_input_tokens": 2048
+    },
+    "general_sft": {
+      "output_dir": "datasets/shared_general_replay_v2"
+    }
+  },
+  "teacher": {
+    "path": "models/teacher/minicpm3_4b_recovered",
+    "model": "openbmb/MiniCPM3-4B",
+    "revision": "d6b14ddaefdb11c624dd75c3c779549bc90b08cb",
+    "weight_file": "pytorch_model.bin",
+    "weight_sha256": "f4c69dfe493d3b644071e1b3820d68f49bcd6674cd40e71b9e451b8534586613"
+  },
+  "student": {
+    "path": "models/text/sft_base_50000",
+    "adapter_name": "opd_ifeval_rank64",
+    "lora_rank": 64,
+    "lora_alpha": 64.0,
+    "lora_target": "attn_mlp_skip_first4"
+  },
+  "teacher_pool": {
+    "output_dir": "datasets/opd_ifeval/teacher_pool_minicpm3_4b_bf16_greedy_bucketed",
+    "batch_size": 24,
+    "attempts": [
+      {
+        "name": "greedy_1024_bf16",
+        "do_sample": false,
+        "temperature": 0.0,
+        "top_p": 1.0,
+        "max_new_tokens": 1024,
+        "repetition_penalty": 1.05,
+        "no_repeat_ngram_size": 16
+      }
+    ]
+  },
+  "composition": {
+    "student_on_policy_ifeval": 10,
+    "teacher_verified_ifeval": 3,
+    "general_sft_per_update": 3,
+    "general_language_cycle": [
+      {
+        "chinese": 2,
+        "english": 1
+      }
+    ],
+    "effective_global_batch": 16,
+    "target_objective_share": {
+      "student_opd": 0.65,
+      "teacher_verified": 0.2,
+      "general_replay": 0.15
+    }
+  },
+  "training": {
+    "epochs": 3,
+    "physical_microbatch": 1,
+    "student_generation_batch_size": 10,
+    "student_rollout_max_new_tokens": 768,
+    "student_temperature": 0.6,
+    "student_top_p": 0.9,
+    "student_repetition_penalty": 1.08,
+    "student_no_repeat_ngram_size": 16,
+    "distillation_temperature": 1.0,
+    "jsd_beta": 0.5,
+    "jsd_chunk_tokens": 32,
+    "teacher_jsd_weight": 0.5,
+    "teacher_ce_weight": 0.5,
+    "student_verified_self_ce_weight": 0.05,
+    "objective_ema_decay": 0.95,
+    "objective_scale_min": 0.0001,
+    "objective_scale_max": 10.0,
+    "peak_learning_rate": 1.2E-06,
+    "minimum_learning_rate": 1E-07,
+    "warmup_optimizer_steps": 60,
+    "max_grad_norm": 1.0,
+    "checkpoint_every_updates": 30,
+    "gc_collect_every_updates": 8,
+    "pilot_updates": 30,
+    "pilot_student_share_min": 0.6,
+    "pilot_student_share_max": 0.75,
+    "seed": 20260904,
+    "keep_last_checkpoints": 2,
+    "general_eval_every_updates": 120
+  },
+  "evaluation": {
+    "max_new_tokens": 1024,
+    "batch_size": 8,
+    "maximum_general_loss_increase": 0.1,
+    "selection": "best held-out RLVR-IFeval strict verifier pass rate with general replay loss increase <=10%; Google IFEval remains final-only"
+  },
+  "constraints": {
+    "single_gpu_vram_gb": 32,
+    "teacher_frozen": true,
+    "student_base_frozen": true,
+    "only_lora_trainable": true,
+    "student_gradient_checkpointing": true,
+    "minimum_free_vram_gb_before_start": 24
+  },
+  "run_name": "opd_ifeval_shared_65_20_15"
+}

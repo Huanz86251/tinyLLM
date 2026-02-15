@@ -1,0 +1,18 @@
+{
+  "python": "3.10.19",
+  "packages": {
+    "torch": "2.8.0+cu128",
+    "transformers": "4.57.1",
+    "safetensors": "0.7.0",
+    "datasets": "2.21.0",
+    "streamlit": "1.30.0",
+    "numpy": "1.26.4",
+    "pillow": "10.4.0",
+    "pytorch-tcn": "1.2.3",
+    "tensorboard": "2.20.0",
+    "timm": "1.0.22",
+    "einops": "0.8.1",
+    "lmdb": null
+  },
+  "interpreter": "C:\\ProgramData\\anaconda3\\envs\\llm\\python.exe"
+}

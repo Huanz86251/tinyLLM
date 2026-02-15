@@ -344,7 +344,8 @@ def main():
         train_maxlength=MAX_LEN,
         bos_token_id=tokenizer.bos_token_id,
         eos_token_id=tokenizer.eos_token_id,
-        unk_token_id=tokenizer.unk_token_id
+        unk_token_id=tokenizer.unk_token_id,
+        pad_token_id=tokenizer.pad_token_type_id
     )
     cfg.use_checkpoint = use_checkpoint
     cfg.checkpoint_use_reentrant = checkpoint_use_reentrant

@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>tinyLLM · 本地聊天</title><link rel="icon" href="/assets/logo.svg">
+<link rel="stylesheet" href="/assets/vendor/katex/katex.min.css">
+<link rel="stylesheet" href="/assets/app.css">
+<script src="/assets/vendor/katex/katex.min.js" defer></script>
+<script src="/assets/rendering.js" defer></script>
+<script src="/assets/app.js" defer></script></head>
+<body>
+<aside class="sidebar" id="sidebar">
+  <a class="brand" href="/" aria-label="tinyLLM 首页"><img src="/assets/logo.svg" alt=""><span>tinyLLM</span><small>LOCAL</small></a>
+  <button class="new-chat" id="newChat"><span>＋</span> 新对话 <kbd>Ctrl K</kbd></button>
+  <p class="section-label">最近的对话</p><nav id="chatList" class="chat-list" aria-label="会话列表"></nav>
+  <div class="sidebar-bottom">
+    <button class="quiet info-link" id="aboutOpen"><span>ⓘ</span> 模型与实验记录</button>
+    <div class="device-card"><span class="device-icon">◈</span><div><b>本地工作区</b><small id="deviceLabel">正在连接你的电脑…</small></div><i class="online-dot"></i></div>
+  </div>
+</aside>
+<main>
+  <header class="topbar">
+    <button class="icon-btn mobile-menu" id="sidebarToggle" aria-label="展开会话列表">☰</button>
+    <div class="top-model"><strong id="topMode">普通聊天</strong><span id="topModel">SFT · 0.5B</span></div>
+    <div class="connection"><i id="statusDot" class="online-dot waiting"></i><span id="globalStatus">正在连接</span></div>
+  </header>
+  <section class="conversation" id="conversation" aria-label="聊天内容">
+    <div class="welcome" id="welcome">
+      <div class="hero-mark"><img src="/assets/logo.svg" alt=""></div>
+      <p class="eyebrow">YOUR SMALL MODEL. YOUR OWN COMPUTER.</p>
+      <h1>今天，一起探索什么？</h1>
+      <p class="welcome-sub">从一个问题开始。文字、推理和图像，都在本地完成。</p>
+      <div class="suggestions">
+        <button data-suggest="chat"><span class="suggest-icon mint">✦</span><b>聊聊一个想法</b><small>解释概念，整理思路</small><span class="suggest-arrow">↗</span></button>
+        <button data-suggest="math"><span class="suggest-icon blue">∑</span><b>一步步解题</b><small>数学题与逻辑推理</small><span class="suggest-arrow">↗</span></button>
+        <button data-suggest="vision"><span class="suggest-icon peach">▧</span><b>看懂一张图片</b><small>上传图片，继续追问</small><span class="suggest-arrow">↗</span></button>
+      </div>
+      <div class="warm-hint" id="warmHint"><span class="tiny-spinner"></span><span>正在准备默认 SFT 模型，你可以先输入问题。</span></div>
+    </div>
+    <div id="messages" class="messages" aria-live="polite" aria-relevant="additions"></div>
+  </section>
+  <div class="composer-dock">
+    <div id="contextImage" class="context-image hidden"></div>
+    <div class="composer" id="composer">
+      <div id="attachmentPreview" class="attachment-preview hidden"></div>
+      <label class="sr-only" for="prompt">发送消息</label>
+      <textarea id="prompt" rows="1" maxlength="12000" placeholder="发消息给 tinyLLM…" autocomplete="off"></textarea>
+      <div class="composer-toolbar">
+        <div class="attach-wrap">
+          <button id="attachButton" class="icon-btn attach-btn" aria-label="添加图片" aria-expanded="false">＋</button>
+          <div class="popover attachment-menu hidden" id="attachMenu">
+            <button id="uploadChoice"><span>↑</span> 上传图片<small>PNG / JPEG / WebP</small></button>
+            <button id="exampleCat"><span>▧</span> 试试猫的图片</button>
+            <button id="exampleAstronaut"><span>◉</span> 试试宇航员图片</button>
+          </div>
+          <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp" hidden>
+        </div>
+        <span class="composer-note" id="composerNote">SFT 基础模型 · 无 LoRA</span>
+        <div class="mode-wrap">
+          <button class="mode-trigger" id="modeTrigger" aria-expanded="false"><span id="modeIcon">✦</span><span id="modeLabel">普通聊天</span><span class="chevron">⌄</span></button>
+          <div class="popover mode-menu hidden" id="modeMenu" role="menu">
+            <p>选择模式</p>
+            <button data-mode="chat" role="menuitemradio" aria-checked="true"><span>✦</span><div><b>普通聊天</b><small>SFT 基础模型</small></div><i>✓</i></button>
+            <button data-mode="math" role="menuitemradio" aria-checked="false"><span>∑</span><div><b>数学推理</b><small>SFT 50000 · GSM8K 50.64%</small></div><i></i></button>
+            <button data-mode="opd" role="menuitemradio" aria-checked="false"><span>◎</span><div><b>OPD 数学</b><small>SFT + MiniCPM3-4B OPD LoRA</small></div><i></i></button>
+            <button data-mode="arc" role="menuitemradio" aria-checked="false"><span>⌘</span><div><b>科学 · ARC</b><small>同一底座 + ARC 峰值 LoRA</small></div><i></i></button>
+            <button data-mode="vision" role="menuitemradio" aria-checked="false"><span>▧</span><div><b>图片问答</b><small>Continual v5 · Best checkpoint 18000</small></div><i></i></button>
+          </div>
+        </div>
+        <button id="sendButton" class="send-btn" aria-label="发送消息" disabled><span>↑</span></button>
+      </div>
+      <div class="model-progress hidden" id="modelProgress"><span class="tiny-spinner"></span><span id="progressText">正在加载模型</span></div>
+    </div>
+    <p class="footer-note"><span>◈ 仅在这台电脑上运行</span><span>模型可能出错，请核对重要信息。</span></p>
+  </div>
+</main>
+<div class="toast hidden" id="toast" role="status"></div>
+<dialog id="aboutDialog">
+  <div class="dialog-heading"><div><p class="eyebrow">MODELS & EXPERIMENTS</p><h2>你正在使用哪一份模型？</h2></div><button id="aboutClose" class="icon-btn" aria-label="关闭">×</button></div>
+  <div class="about-grid">
+    <article><small>默认 · 普通 / 数学</small><h3>SFT checkpoint 50000</h3><p>数学模式使用完整 GSM8K 测试集验证过的配置：严格贪心、640 tokens、CoT 提示，成绩 <strong>668/1319 = 50.64%</strong>。</p></article>
+    <article><small>OPD · 数学</small><h3>SFT + MiniCPM3-4B 教师</h3><p>96 条学生现场采样轨迹训练。固定 128 题独立子集从 <strong>46.09% → 50.00%</strong>，提升 3.91 个百分点；循环数 2 → 2。</p></article>
+    <article><small>科学 · ARC</small><h3>SFT + ARC LoRA</h3><p>启用 2025-12-22 第 200 步适配器。切回普通 / 数学即关闭 LoRA，不重载底座。</p></article>
+    <article><small>多模态 · 当前演示</small><h3>Continual v5 Best 18000</h3><p>使用本轮视觉与文本回放验证损失均最低的 checkpoint；旧版与昨天的 13500 权重仍在本地完整保留。</p></article>
+  </div>
+  <div class="history-note"><b>历史成绩与本次 OPD 结果的口径</b><p>当前可复现的 SFT 完整基线为 <strong>50.64%</strong>。旧 GSM8K GRPO 的历史峰值为 51.40%，但对应峰值适配器未找到，因此演示不冒用该成绩。</p><p>新 OPD 数学：固定 128 题子集曾从 <strong>46.09% → 50.00%</strong>；随后完整 1,319 题验证低于 SFT 基线，因此默认数学演示使用 SFT 50000。</p><p>ARC：所选历史权重同次实验从 <strong>30.09% → 35.98%</strong>，提升 5.89 个百分点。历史基座按存留脚本匹配，完整启动参数未保留。</p></div>
+  <div class="decoding-info"><b>解码保护已启用</b><p>普通/图片：温和采样 + 重复惩罚；数学模式：与 50.64% 完整基线一致的严格贪心和 640-token 上限。明显的循环尾部仍会安全停止，但不改写正常数学 token 的概率。</p><p>公式使用本地 KaTeX 渲染。参数位于 configs/decoding.json；触发原因与原始输出保存在本地推理日志。</p></div>
+  <div class="settings-row"><label for="maxTokens">单次生成上限</label><select id="maxTokens"><option value="512">512 tokens · 较短</option><option value="640">640 tokens · 数学严格配置</option><option value="1024">1024 tokens</option><option value="1536">1536 tokens</option><option value="2048" selected>2048 tokens · 普通 / 图片</option></select><button class="quiet" id="unloadButton">释放模型显存</button></div>
+  <p class="dialog-foot">对话记录保存在本机浏览器；推理日志写入项目的 logs/local_runs 目录。不会上传至云端。</p>
+</dialog>
+</body></html>

@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# IDE and OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local settings and secrets
+.env
+.env.*
+!.env.example
+configs/models.json
+*.pem
+*.key
+
+# Models, datasets, caches, and generated outputs
+models/
+datasets/
+cache/
+runtime/
+runs/
+logs/
+outputs/
+checkpoints/
+wandb/
+*.pt
+*.pth
+*.ckpt
+*.bin
+*.safetensors
+*.gguf
+*.arrow
+*.parquet
+*.lmdb
+
+# Front-end build dependencies (compiled KaTeX assets under ui/vendor are kept)
+node_modules/
+ui/vendor_build/
+

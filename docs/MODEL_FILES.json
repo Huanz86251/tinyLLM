@@ -1,0 +1,37 @@
+{
+  "release": "tinyLLM-local-20260908",
+  "created_at": "2026-09-08",
+  "parameter_count": 510224888,
+  "files": [
+    {
+      "file": "tinyllm-arc-grpo-best.zip",
+      "bytes": 58446630,
+      "sha256": "1549521ebdcbc4b16c287e54e5bd45e0d80bdd4f827b2c6af2ffb7ef86169001"
+    },
+    {
+      "file": "tinyllm-gsm8k-opd-experimental.zip",
+      "bytes": 4572327,
+      "sha256": "08bfa0b69e2c758c08500e1c6418d8f7e35ac1c389dc13f049ddc7663ac7c750"
+    },
+    {
+      "file": "tinyllm-internvit-300m.zip",
+      "bytes": 608104056,
+      "sha256": "0b608a7906fc54ed3e5131afd9d360f3b154ddc6743b12f7d28fc7bd08d4cd36"
+    },
+    {
+      "file": "tinyllm-sft-base-0.51b.zip",
+      "bytes": 2047652348,
+      "sha256": "4c733698ce207acab31dffbf5af1da094dc7257a892657d20f5fcb68ce5879b7"
+    },
+    {
+      "file": "tinyllm-vlm-step18000.zip",
+      "bytes": 2648110041,
+      "sha256": "1e5490b68c79bb4c7c94476457544cf32fef348fd866faacb292a86cacde8f64"
+    }
+  ],
+  "notes": [
+    "SFT base includes tokenizer",
+    "IFEval OPD epoch 3 adapter unavailable locally",
+    "GSM8K OPD package is experimental and is not the historical 51.40% adapter"
+  ]
+}

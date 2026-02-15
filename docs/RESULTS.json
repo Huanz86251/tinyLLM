@@ -1,0 +1,45 @@
+{
+  "arc_grpo": {
+    "benchmark": "ARC-Easy historical full evaluation",
+    "baseline_accuracy": 0.30092594027519226,
+    "best_accuracy": 0.3598484992980957,
+    "delta_percentage_points": 5.892255902290344,
+    "best_step": 200,
+    "best_run": "tinyllm-grpo-arc-20251222-142857",
+    "artifact_available_locally": true
+  },
+  "gsm8k_grpo": {
+    "benchmark": "GSM8K historical full evaluation",
+    "baseline_accuracy": 0.5049,
+    "best_accuracy": 0.5140,
+    "delta_percentage_points": 0.91,
+    "best_step": 300,
+    "best_run": "tinyllm-grpo-gsm8k-20251129-093419",
+    "artifact_available_locally": false,
+    "note": "Historical result only; the matching best adapter is not retained."
+  },
+  "ifeval_opd": {
+    "benchmark": "Google IFEval, 541 prompts and 834 instructions",
+    "decode": "greedy, max_new_tokens=1024",
+    "strict_prompt_accuracy": [0.1479, 0.1571],
+    "strict_instruction_accuracy": [0.2374, 0.2518],
+    "loose_prompt_accuracy": [0.1719, 0.1774],
+    "loose_instruction_accuracy": [0.2686, 0.2770],
+    "best_epoch": 3,
+    "artifact_available_locally": false,
+    "note": "The result was completed on the retired cloud instance; the adapter was not copied locally."
+  },
+  "gsm8k_opd_control": {
+    "benchmark": "GSM8K test, 1319 examples",
+    "sft_baseline_accuracy": 0.5064,
+    "stage2_accuracy": 0.5027,
+    "stage3_accuracy": 0.5049,
+    "note": "Negative control. Do not present this run as an improvement."
+  },
+  "vlm_continual": {
+    "best_step": 18000,
+    "visual_eval_loss": 2.8359344005584717,
+    "text_replay_loss": 3.192694664001465,
+    "artifact_available_locally": true
+  }
+}

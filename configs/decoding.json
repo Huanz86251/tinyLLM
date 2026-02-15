@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "description": "Demo-only decoding profiles. Historical evaluation protocols and weights are unchanged.",
+  "common": {
+    "seed": 42,
+    "penalty_window": 256,
+    "ngram_window": 512,
+    "loop_min_tokens": 48,
+    "loop_min_period": 8,
+    "loop_repeats": 3,
+    "near_duplicate_ratio": 0.93,
+    "max_generation_seconds": 180,
+    "degenerate_tail_min_chars": 64
+  },
+  "modes": {
+    "chat": {
+      "strategy": "sample",
+      "temperature": 0.45,
+      "top_p": 0.85,
+      "top_k": 30,
+      "repetition_penalty": 1.08,
+      "frequency_penalty": 0.05,
+      "no_repeat_ngram_size": 12,
+      "near_duplicate_clauses": true,
+      "min_p": 0.06
+    },
+    "vision": {
+      "strategy": "sample",
+      "temperature": 0.25,
+      "top_p": 0.8,
+      "top_k": 20,
+      "repetition_penalty": 1.06,
+      "frequency_penalty": 0.02,
+      "no_repeat_ngram_size": 12,
+      "near_duplicate_clauses": true,
+      "min_p": 0.08
+    },
+    "math": {
+      "strategy": "greedy",
+      "temperature": 1,
+      "top_p": 1,
+      "top_k": 1,
+      "repetition_penalty": 1.0,
+      "frequency_penalty": 0,
+      "no_repeat_ngram_size": 0,
+      "loop_repeats": 4,
+      "loop_min_tokens": 96,
+      "loop_min_period": 16,
+      "near_duplicate_clauses": false,
+      "max_generation_seconds": 240,
+      "min_p": 0.0,
+      "max_new_tokens": 640,
+      "protocol": "GSM8K full-test baseline 668/1319 (50.64%); exact greedy logits, with display-only loop guard"
+    },
+    "arc": {
+      "strategy": "greedy",
+      "temperature": 1,
+      "top_p": 1,
+      "top_k": 1,
+      "repetition_penalty": 1.04,
+      "frequency_penalty": 0,
+      "no_repeat_ngram_size": 16,
+      "loop_repeats": 4,
+      "loop_min_tokens": 80,
+      "loop_min_period": 12,
+      "near_duplicate_clauses": false,
+      "min_p": 0.0
+    }
+  }
+}
