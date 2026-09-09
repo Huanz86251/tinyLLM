@@ -1,0 +1,47 @@
+{
+  "sft_base": {
+    "label": "Text SFT baseline",
+    "base": "models/text/sft_base_50000",
+    "tokenizer": "models/text/sft_base_50000"
+  },
+  "arc_best": {
+    "label": "ARC GRPO best adapter",
+    "base": "models/text/sft_base_50000",
+    "tokenizer": "models/text/sft_base_50000",
+    "adapter": {
+      "path": "models/adapters/arc_best/adapter_model.safetensors",
+      "name": "arc",
+      "rank": 64,
+      "alpha": 32.0,
+      "dropout": 0.0,
+      "target": "attn_mlp_skip_first4"
+    }
+  },
+  "opd_ifeval_best": {
+    "label": "IFEval OPD epoch 3 adapter",
+    "base": "models/text/sft_base_50000",
+    "tokenizer": "models/text/sft_base_50000",
+    "adapter": {
+      "path": "models/adapters/opd_ifeval/adapter_model.safetensors",
+      "name": "opd_ifeval_rank64",
+      "rank": 64,
+      "alpha": 64.0,
+      "dropout": 0.0,
+      "target": "attn_mlp_skip_first4"
+    }
+  },
+  "vlm": {
+    "label": "VLM continual v5 best, step 18000",
+    "base": "models/vision_language/tinyLLM-0.51B-VLM",
+    "tokenizer": "models/vision_language/tinyLLM-0.51B-VLM",
+    "adapter": {
+      "path": "models/vision_language/tinyLLM-0.51B-VLM/adapter/adapter_model.safetensors",
+      "name": "vlm_sft",
+      "rank": 128,
+      "alpha": 128.0,
+      "dropout": 0.0,
+      "target": "all"
+    },
+    "vision_tower": "models/vision/InternViT-300M-448px-V2_5"
+  }
+}

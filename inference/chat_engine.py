@@ -10,7 +10,7 @@ from inference.decoding import (SafeDecoder, trim_history, completed_boxed_answe
 MODES = {
     "chat": {"label": "普通聊天", "model": "sft_base", "family": "text"},
     "math": {"label": "数学推理", "model": "sft_base", "family": "text", "max_new_tokens": 640},
-    "opd": {"label": "OPD 数学", "model": "opd_gsm8k_best", "family": "text", "max_new_tokens": 640},
+    "opd": {"label": "OPD 对齐", "model": "opd_gsm8k_best", "family": "text", "max_new_tokens": 640},
     "arc": {"label": "科学 · ARC", "model": "arc_best", "family": "text"},
     "vision": {"label": "图片问答", "model": "vlm", "family": "vision"},
 }
@@ -25,6 +25,7 @@ class ChatEngine:
         self.family = self.mode = self.model_id = None
         self.info = {}
         self.arc_loaded = self.opd_loaded = False
+        self.opd_adapter_name = None
         self.vision_cache = None
         self._stop = threading.Event()
         self._state = {"busy": False, "phase": "等待加载 SFT", "request_id": None,
@@ -39,15 +40,20 @@ class ChatEngine:
         with self._meta_lock:
             result = dict(self._state)
         available = {}
+        records = registry()
         for name, spec in MODES.items():
-            rec = registry()[spec["model"]]
+            model_id = self._mode_model_id(name, records)
+            rec = records.get(model_id)
+            if rec is None:
+                available[name] = False
+                continue
             base_ok = (path(rec["base"]) / "model.safetensors").is_file()
             adapter_ok = "adapter" not in rec or path(rec["adapter"]["path"]).is_file()
             available[name] = base_ok and adapter_ok
         result.update(mode=self.mode, family=self.family, model_id=self.model_id,
                       mode_available=available, base_loads=self.base_loads,
                       active_adapter=("arc" if self.mode == "arc" else
-                                      "opd_gsm8k_stage" if self.mode == "opd" else
+                                      self.opd_adapter_name if self.mode == "opd" else
                                       "vlm_sft" if self.family == "vision" else None),
                       arc_cached=self.arc_loaded, opd_cached=self.opd_loaded,
                       device=torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU")
@@ -61,12 +67,20 @@ class ChatEngine:
         if emit:
             emit({"type": "status", "message": text})
 
+    @staticmethod
+    def _mode_model_id(mode, records=None):
+        records = records or registry()
+        if mode == "opd" and "opd_ifeval_best" in records:
+            return "opd_ifeval_best"
+        return MODES[mode]["model"]
+
     def _release(self, emit=None):
         self._phase("正在释放上一套模型的显存", emit)
         self.model = self.tokenizer = self.vip = self.vision_cache = None
         self.family = self.mode = self.model_id = None
         self.info = {}
         self.arc_loaded = self.opd_loaded = False
+        self.opd_adapter_name = None
         gc.collect()
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
@@ -76,7 +90,7 @@ class ChatEngine:
         if mode not in MODES:
             raise ValueError("未知模式")
         family = MODES[mode]["family"]
-        requested_model_id = MODES[mode]["model"]
+        requested_model_id = self._mode_model_id(mode)
         load_model_id = "sft_base" if family == "text" else requested_model_id
         use_tf32 = family == "text"
         torch.set_float32_matmul_precision("high" if use_tf32 else "highest")
@@ -108,17 +122,16 @@ class ChatEngine:
                 self.model.activate_single_lora("arc")
             elif mode == "opd":
                 if not self.opd_loaded:
-                    self._phase("正在热加载 OPD 数学 LoRA", emit)
-                    adapter = registry()["opd_gsm8k_best"]["adapter"]
+                    self._phase("正在热加载 OPD LoRA", emit)
+                    adapter = registry()[requested_model_id]["adapter"]
                     self.model.attach_lora_adapter(adapter_name=adapter["name"], rank=adapter["rank"],
                                                    dropout=adapter["dropout"], alpha=adapter["alpha"],
                                                    target=adapter["target"])
-                    count = checked_adapter(self.model, path(adapter["path"]), adapter["name"])
-                    if count != 168:
-                        raise RuntimeError(f"OPD adapter tensor count changed: {count}")
+                    checked_adapter(self.model, path(adapter["path"]), adapter["name"])
                     self.model.eval()
                     self.opd_loaded = True
-                self.model.activate_single_lora("opd_gsm8k_stage")
+                    self.opd_adapter_name = adapter["name"]
+                self.model.activate_single_lora(self.opd_adapter_name)
             else:
                 self.model.activate_single_lora(None)
         elif self.vip is None:
