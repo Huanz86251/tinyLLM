@@ -235,7 +235,7 @@ def main() -> None:
         encoding="utf-8",
     )
     subprocess.run(
-        [sys.executable, str(ROOT / "train" / "vllm_sft_continual.py")],
+        [sys.executable, str(ROOT / "train" / "vlm" / "continual.py")],
         env=env,
         check=True,
     )

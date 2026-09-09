@@ -101,7 +101,7 @@ def main() -> None:
         "VLM_PACK_IMAGE_DIR": str(project_path(cfg["paths"]["image_root"])),
         "VLM_PACK_OUT_DIR": str(project_path(cfg["paths"]["packed_dataset"])),
     })
-    run([py, ROOT / "train" / "pack_vllm_continual_v2.py"], env=env)
+    run([py, ROOT / "train" / "vlm" / "pack_continual.py"], env=env)
     print("VLM v5 preprocessing and packing completed; model training was not started.")
 
 

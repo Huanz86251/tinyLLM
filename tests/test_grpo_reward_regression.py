@@ -1,5 +1,5 @@
 import unittest
-from train.GRPO import compute_rewards_for_group
+from train.grpo.gsm8k import compute_rewards_for_group
 
 class FakeTokenizer:
     def encode(self,text,add_special_tokens=False):

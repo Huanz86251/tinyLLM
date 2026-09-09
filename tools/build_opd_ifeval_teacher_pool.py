@@ -25,8 +25,8 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from project_paths import path
 from train import GRPO as g
-from train.opd_gsm8k_stage import is_loop
-from train.opd_hybrid_v3 import file_sha256
+from train.opd.gsm8k_stage import is_loop
+from train.opd.gsm8k_hybrid import file_sha256
 
 
 def read_jsonl(file: Path) -> list[dict]:

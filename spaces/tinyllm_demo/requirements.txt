@@ -1,0 +1,5 @@
+transformers==4.57.1
+huggingface-hub>=0.34.4
+safetensors>=0.4.5
+sentencepiece>=0.2.0
+protobuf>=4.25

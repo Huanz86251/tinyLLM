@@ -1,6 +1,10 @@
 """Run against the local chat service; records real GPU behavior, not fabricated replies."""
 import json,time,uuid,urllib.request,urllib.error,os
+import unittest
 from pathlib import Path
+
+if __name__ != "__main__":
+    raise unittest.SkipTest("requires a running tinyLLM chat server")
 
 BASE=os.environ.get("TINYLLM_TEST_URL","http://127.0.0.1:8502")
 report={"checks":[],"conversations":[],"visual_browser_check":False}

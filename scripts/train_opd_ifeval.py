@@ -12,7 +12,7 @@ CONFIG = ROOT / "configs" / "opd_ifeval_shared_65_20_15.json"
 
 if __name__ == "__main__":
     subprocess.run(
-        [sys.executable, str(ROOT / "train" / "opd_ifeval.py"),
+        [sys.executable, str(ROOT / "train" / "opd" / "ifeval.py"),
          "--config", str(CONFIG), *sys.argv[1:]],
         cwd=ROOT,
         check=True,

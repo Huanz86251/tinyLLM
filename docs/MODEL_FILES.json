@@ -14,6 +14,11 @@
       "sha256": "08bfa0b69e2c758c08500e1c6418d8f7e35ac1c389dc13f049ddc7663ac7c750"
     },
     {
+      "file": "tinyllm-ifeval-opd-epoch3.zip",
+      "bytes": 58450184,
+      "sha256": "dbc1fba242057ef27adf409ab0c964c44d31b24d26b62543e36cbf7424d3976b"
+    },
+    {
       "file": "tinyllm-internvit-300m.zip",
       "bytes": 608104056,
       "sha256": "0b608a7906fc54ed3e5131afd9d360f3b154ddc6743b12f7d28fc7bd08d4cd36"
@@ -31,7 +36,8 @@
   ],
   "notes": [
     "SFT base includes tokenizer",
-    "IFEval OPD epoch 3 adapter unavailable locally",
-    "GSM8K OPD package is experimental and is not the historical 51.40% adapter"
-  ]
+    "IFEval OPD epoch 3 adapter is included and matches the reported Google IFEval result",
+    "GSM8K OPD package is experimental and is not used for the public GSM8K headline"
+  ],
+  "updated_at": "2026-09-09"
 }

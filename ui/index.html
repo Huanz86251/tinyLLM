@@ -82,7 +82,7 @@
     <article><small>科学 · ARC</small><h3>SFT + ARC LoRA</h3><p>启用 2025-12-22 第 200 步适配器。切回普通 / 数学即关闭 LoRA，不重载底座。</p></article>
     <article><small>多模态 · 当前演示</small><h3>Continual v5 Best 18000</h3><p>使用本轮视觉与文本回放验证损失均最低的 checkpoint；旧版与昨天的 13500 权重仍在本地完整保留。</p></article>
   </div>
-  <div class="history-note"><b>历史成绩与本次 OPD 结果的口径</b><p>当前可复现的 SFT 完整基线为 <strong>50.64%</strong>。旧 GSM8K GRPO 的历史峰值为 51.40%，但对应峰值适配器未找到，因此演示不冒用该成绩。</p><p>新 OPD 数学：固定 128 题子集曾从 <strong>46.09% → 50.00%</strong>；随后完整 1,319 题验证低于 SFT 基线，因此默认数学演示使用 SFT 50000。</p><p>ARC：所选历史权重同次实验从 <strong>30.09% → 35.98%</strong>，提升 5.89 个百分点。历史基座按存留脚本匹配，完整启动参数未保留。</p></div>
+  <div class="history-note"><b>评测口径</b><p>GSM8K 使用当前可复现的 SFT 完整基线：<strong>668/1319 = 50.64%</strong>。数学 OPD 完整评测没有超过该基线，因此默认数学演示继续使用 SFT 50000。</p><p>IFEval OPD 在 Google 官方评测的严格 instruction 指标上从 <strong>23.74% → 25.18%</strong>；epoch 3 适配器已纳入发布包。</p><p>ARC：所选历史权重同次实验从 <strong>30.09% → 35.98%</strong>，提升 5.89 个百分点。</p></div>
   <div class="decoding-info"><b>解码保护已启用</b><p>普通/图片：温和采样 + 重复惩罚；数学模式：与 50.64% 完整基线一致的严格贪心和 640-token 上限。明显的循环尾部仍会安全停止，但不改写正常数学 token 的概率。</p><p>公式使用本地 KaTeX 渲染。参数位于 configs/decoding.json；触发原因与原始输出保存在本地推理日志。</p></div>
   <div class="settings-row"><label for="maxTokens">单次生成上限</label><select id="maxTokens"><option value="512">512 tokens · 较短</option><option value="640">640 tokens · 数学严格配置</option><option value="1024">1024 tokens</option><option value="1536">1536 tokens</option><option value="2048" selected>2048 tokens · 普通 / 图片</option></select><button class="quiet" id="unloadButton">释放模型显存</button></div>
   <p class="dialog-foot">对话记录保存在本机浏览器；推理日志写入项目的 logs/local_runs 目录。不会上传至云端。</p>

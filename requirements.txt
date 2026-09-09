@@ -1,7 +1,9 @@
 torch>=2.4
 transformers>=4.49,<4.58
+huggingface-hub>=0.34
 datasets>=2.21
 safetensors>=0.4
+sentencepiece>=0.2
 numpy>=1.26,<2
 Pillow>=10
 Flask>=3
@@ -12,4 +14,3 @@ einops>=0.8
 pytorch-tcn>=1.2
 lmdb>=1.5
 xxhash>=3.5
-

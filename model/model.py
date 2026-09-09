@@ -1,13 +1,21 @@
 import math
 import os
+import json
+from pathlib import Path
 from os.path import split
-from transformers import GenerationMixin, GenerationConfig, Cache
+from transformers import GenerationMixin, GenerationConfig, Cache, PreTrainedModel
 from transformers.modeling_outputs import CausalLMOutputWithPast
 import copy
 from typing import Dict, List, Optional, Literal,Union,Tuple,Any
 from types import SimpleNamespace
 from model.config import Config
-from pytorch_tcn import TCN,TemporalConv1d
+try:
+    from pytorch_tcn import TCN, TemporalConv1d
+    HAS_PYTORCH_TCN = True
+except Exception:
+    TCN = None
+    TemporalConv1d = None
+    HAS_PYTORCH_TCN = False
 from datetime import datetime
 import torch
 
@@ -246,6 +254,8 @@ class TCNBranchPT(nn.Module):
         use_norm: str = "weight_norm",
     ):
         super().__init__()
+        if not HAS_PYTORCH_TCN:
+            raise ImportError("use_tcn=True requires the optional 'pytorch-tcn' package")
 
         out_c = max(1, int(round(hidden_size * float(expansion))))
         channels: List[int] = [out_c for _ in range(int(num_blocks))]
@@ -1281,12 +1291,17 @@ class Transformer_block(nn.Module):
         return x, aux_loss, present_state
 
 
-class TinyLLM(nn.Module, GenerationMixin):
+class TinyLLM(PreTrainedModel, GenerationMixin):
+    """tinyLLM with the standard Transformers save/load lifecycle."""
+
+    config_class = Config
+    base_model_prefix = ""
     main_input_name = "input_ids"
     _is_stateful = True
+    _supports_cache_class = False
 
     def __init__(self, cfg: Config):
-        super().__init__()
+        super().__init__(cfg)
         self._train_step = 0
         self.cfg = cfg
         self.config = cfg
@@ -1433,6 +1448,16 @@ class TinyLLM(nn.Module, GenerationMixin):
             self.query_embed = None
             self.qformer_blocks = None
             self.qformer_final_norm = None
+
+    def get_input_embeddings(self):
+        return self.tok_embed
+
+    def set_input_embeddings(self, value):
+        self.tok_embed = value
+
+    def get_output_embeddings(self):
+        # Output logits are projected with the tied token embedding in forward().
+        return None
 
     def encode_image_with_qformer(
             self,
@@ -2248,6 +2273,139 @@ class TinyLLM(nn.Module, GenerationMixin):
                 print(f"[LoRA-load] unexpected[:10]= {unexpected[:10]} (total {len(unexpected)})")
 
         return missing, unexpected
+
+    @staticmethod
+    def _resolve_hub_file(
+            model_or_path: str | os.PathLike,
+            filename: str,
+            *,
+            subfolder: str | None = None,
+            revision: str | None = None,
+            token: str | bool | None = None,
+    ) -> Path:
+        local = Path(model_or_path)
+        candidate = local / subfolder / filename if subfolder else local / filename
+        if candidate.is_file():
+            return candidate
+        from huggingface_hub import hf_hub_download
+        return Path(hf_hub_download(
+            repo_id=str(model_or_path),
+            filename=filename,
+            subfolder=subfolder,
+            revision=revision,
+            token=token,
+        ))
+
+    def save_lora_pretrained(
+            self,
+            save_directory: str | os.PathLike,
+            adapter_name: str,
+            *,
+            rank: int,
+            alpha: float,
+            dropout: float,
+            target: str,
+            base_model_name_or_path: str | None = None,
+    ) -> None:
+        """Save one native tinyLLM LoRA in a Hub-friendly directory."""
+        from safetensors.torch import save_file
+
+        output = Path(save_directory)
+        output.mkdir(parents=True, exist_ok=True)
+        state = self.get_lora_state_dict(adapter_name)
+        if not state:
+            raise ValueError(f"LoRA adapter {adapter_name!r} is not attached")
+        save_file({key: value.contiguous() for key, value in state.items()},
+                  str(output / "adapter_model.safetensors"))
+        metadata = {
+            "format": "tinyllm_lora_v1",
+            "adapter_name": adapter_name,
+            "rank": int(rank),
+            "alpha": float(alpha),
+            "dropout": float(dropout),
+            "target": target,
+            "base_model_name_or_path": base_model_name_or_path,
+        }
+        (output / "adapter_config.json").write_text(
+            json.dumps(metadata, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+
+    def load_lora_pretrained(
+            self,
+            model_or_path: str | os.PathLike,
+            *,
+            subfolder: str | None = None,
+            adapter_name: str | None = None,
+            activate: bool = True,
+            revision: str | None = None,
+            token: str | bool | None = None,
+    ) -> dict:
+        """Attach and load a native tinyLLM LoRA from disk or the Hub."""
+        from safetensors.torch import load_file
+
+        config_file = self._resolve_hub_file(
+            model_or_path, "adapter_config.json", subfolder=subfolder,
+            revision=revision, token=token,
+        )
+        weights_file = self._resolve_hub_file(
+            model_or_path, "adapter_model.safetensors", subfolder=subfolder,
+            revision=revision, token=token,
+        )
+        metadata = json.loads(config_file.read_text(encoding="utf-8"))
+        if metadata.get("format") != "tinyllm_lora_v1":
+            raise ValueError(f"Unsupported adapter format: {metadata.get('format')!r}")
+        name = adapter_name or metadata["adapter_name"]
+        source_name = metadata["adapter_name"]
+        self.attach_lora_adapter(
+            adapter_name=name,
+            rank=int(metadata["rank"]),
+            alpha=float(metadata["alpha"]),
+            dropout=float(metadata.get("dropout", 0.0)),
+            target=str(metadata["target"]),
+        )
+        state = load_file(str(weights_file), device="cpu")
+        if name != source_name:
+            marker = f".adapters.{source_name}."
+            replacement = f".adapters.{name}."
+            state = {key.replace(marker, replacement): value for key, value in state.items()}
+        expected = {
+            key for key in self.state_dict()
+            if f".adapters.{name}." in key
+        }
+        if set(state) != expected:
+            raise RuntimeError(
+                "Adapter tensor mismatch: "
+                f"missing={sorted(expected - set(state))[:8]}, "
+                f"unexpected={sorted(set(state) - expected)[:8]}"
+            )
+        self.load_state_dict(state, strict=False)
+        if activate:
+            self.activate_single_lora(name)
+        return {**metadata, "adapter_name": name, "tensor_count": len(state)}
+
+    def load_vision_delta(
+            self,
+            model_or_path: str | os.PathLike,
+            *,
+            subfolder: str | None = None,
+            revision: str | None = None,
+            token: str | bool | None = None,
+    ) -> dict:
+        """Load Q-Former/projector tensors from a local or Hub delta package."""
+        from safetensors.torch import load_file
+
+        weights_file = self._resolve_hub_file(
+            model_or_path, "vision_delta.safetensors", subfolder=subfolder,
+            revision=revision, token=token,
+        )
+        state = load_file(str(weights_file), device="cpu")
+        expected = set(self.state_dict())
+        unexpected = sorted(set(state) - expected)
+        if unexpected:
+            raise RuntimeError(f"Unexpected vision delta tensors: {unexpected[:8]}")
+        self.load_state_dict(state, strict=False)
+        return {"tensor_count": len(state), "path": str(weights_file)}
 
     def prepare_inputs_for_generation(
             self,

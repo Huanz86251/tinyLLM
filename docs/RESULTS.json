@@ -8,15 +8,13 @@
     "best_run": "tinyllm-grpo-arc-20251222-142857",
     "artifact_available_locally": true
   },
-  "gsm8k_grpo": {
-    "benchmark": "GSM8K historical full evaluation",
-    "baseline_accuracy": 0.5049,
-    "best_accuracy": 0.5140,
-    "delta_percentage_points": 0.91,
-    "best_step": 300,
-    "best_run": "tinyllm-grpo-gsm8k-20251129-093419",
-    "artifact_available_locally": false,
-    "note": "Historical result only; the matching best adapter is not retained."
+  "gsm8k_sft": {
+    "benchmark": "GSM8K test, 1319 examples",
+    "accuracy": 0.5064,
+    "correct": 668,
+    "decode": "greedy, max_new_tokens=640, fixed CoT prompt",
+    "artifact_available_locally": true,
+    "note": "Public GSM8K result is the reproducible SFT baseline."
   },
   "ifeval_opd": {
     "benchmark": "Google IFEval, 541 prompts and 834 instructions",
@@ -26,8 +24,9 @@
     "loose_prompt_accuracy": [0.1719, 0.1774],
     "loose_instruction_accuracy": [0.2686, 0.2770],
     "best_epoch": 3,
-    "artifact_available_locally": false,
-    "note": "The result was completed on the retired cloud instance; the adapter was not copied locally."
+    "artifact_available_locally": true,
+    "adapter_sha256": "ba3537e0212096aa006fc829c4f4eb3417c89496a8b873736c79c624545d2698",
+    "note": "Epoch 3 adapter was recovered from the cloud instance on 2026-09-09."
   },
   "gsm8k_opd_control": {
     "benchmark": "GSM8K test, 1319 examples",
