@@ -23,6 +23,21 @@ tinyLLM 是一套从零搭建并训练的 0.51B 中英双语小模型，也可�
 > **在线体验：[Hugging Face Demo](https://huggingface.co/spaces/chris0809/tinyLLM-Demo)**<br>
 > 免费 ZeroGPU 第一次打开可能需要排队，适合快速体验 SFT 文本模型。图片输入和多 LoRA 切换请使用本地 Demo。
 
+<p align="center">
+  <img src="assets/showcase/alignment-results.png" width="920" alt="tinyLLM 对齐训练结果">
+</p>
+## 结果
+
+| 任务 | 方法 | 基线 | 最终结果 | 提升 |
+| --- | --- | ---: | ---: | ---: |
+| GSM8K | 通用SFT后，1,319 题 greedy | — | **50.64%** | — |
+| ARC-Easy | GRPO | 30.09% | **35.98%** | **+5.89 pp** |
+| Google IFEval | MiniCPM3-4B OPD | 23.74% | **25.18%** | **+1.44 pp** |
+
+IFEval 这里写的是 strict instruction accuracy。其余三项也有提升：strict prompt 14.79% → 15.71%，loose prompt 17.19% → 17.74%，loose instruction 26.86% → 27.70%。评测使用 Google IFEval 的 541 个 prompt、834 条 instruction。
+
+GSM8K 展示的是 SFT 基座成绩：668 / 1319。数学强化学习版本也跑过，但结果一般，没有保留这版权重。
+
 ### 开启思维模式
 
 普通聊天默认关闭思维模式。数学或多步推理只需在 Hugging Face chat template 中打开开关，模板会自动注入训练时使用的思维协议：
@@ -61,21 +76,6 @@ ARC 的 GRPO 阶段再强化这件事，但不是简单奖励输出越长越好�
 | `L ≥ 380` | `-0.5` |
 
 没有生成完整 thought 边界时不计算长度项，即按 `b = 0` 处理。因而规范且正确的回答基础奖励是 1.0，合适长度最高约为 1.6；只答对但没有合法 boxed 格式是 0.2；答案错误或撞到输出上限都是 -1.0。`380` 是长度函数自身的兜底阈值，当前 350-token 训练预算下会先触发 340-token 的上限保护。
-<p align="center">
-  <img src="assets/showcase/alignment-results.png" width="920" alt="tinyLLM 对齐训练结果">
-</p>
-## 结果
-
-| 任务 | 方法 | 基线 | 最终结果 | 提升 |
-| --- | --- | ---: | ---: | ---: |
-| GSM8K | 通用SFT后，1,319 题 greedy | — | **50.64%** | — |
-| ARC-Easy | GRPO | 30.09% | **35.98%** | **+5.89 pp** |
-| Google IFEval | MiniCPM3-4B OPD | 23.74% | **25.18%** | **+1.44 pp** |
-
-IFEval 这里写的是 strict instruction accuracy。其余三项也有提升：strict prompt 14.79% → 15.71%，loose prompt 17.19% → 17.74%，loose instruction 26.86% → 27.70%。评测使用 Google IFEval 的 541 个 prompt、834 条 instruction。
-
-GSM8K 展示的是 SFT 基座成绩：668 / 1319。数学强化学习版本也跑过，但结果一般，没有保留这版权重。
-
 ## 模型结构
 
 文本模型是自己写的 `nn.Module + GenerationMixin`，不是直接套一个现成的 Transformers 模型。
