@@ -7,6 +7,44 @@ tinyLLM 是一套从零搭建并训练的 0.51B 中英双语小模型。项目�
 > **在线体验：[Hugging Face Demo](https://huggingface.co/spaces/chris0809/tinyLLM-Demo)**<br>
 > 免费 ZeroGPU 第一次打开可能需要排队，适合快速体验 SFT 文本模型。图片输入和多 LoRA 切换请使用本地 Demo。
 
+### 开启思维模式
+
+普通聊天默认关闭思维模式。数学或多步推理只需在 Hugging Face chat template 中打开开关，模板会自动注入训练时使用的思维协议：
+
+```python
+inputs = tokenizer.apply_chat_template(
+    messages,
+    enable_thinking=True,
+    add_generation_prompt=True,
+    return_tensors="pt",
+)
+```
+
+不传 `enable_thinking` 或设为 `False` 就是普通聊天。无需手动添加 token，也不要 resize embedding；完整加载示例见 [`docs/HUGGINGFACE.md`](docs/HUGGINGFACE.md)，在线 Demo 也提供同名开关。
+
+这套思维格式不是只在推理时临时拼出来的。CPT/SFT 数据预处理会针对不同数据集分别读取它们实际提供的推理字段，例如 `CoT_content`、`inner_thought`、`generated_solution`、`rationale` 或 `solution`，再统一整理成 `<|thought_start|> ... <|thought_end|>` 与最终答案分开的 assistant 样本。数学数据还会检查答案字段、过滤异常语言和过长样本，避免把数据集原有的标签、空推理或截断答案直接带进模板。这样 SFT 先让模型学会“推理过程—最终回答”的边界，Hugging Face 的 `enable_thinking=True` 只负责在 system message 中唤起这套已经学过的格式。
+
+ARC 的 GRPO 阶段再强化这件事，但不是简单奖励输出越长越好。只有答案正确且最终选项格式有效时，思维段长度才参与额外奖励；60～250 token 逐步增加，继续变长后奖励开始回落，达到约 380 token 或撞到生成上限会受到惩罚。正确但没有规范最终格式的回答只拿较低奖励，错误回答不会因为写得长而得分。也就是说，SFT 负责教会模板，GRPO 负责在正确性成立的前提下把推理长度和答案格式压到更稳定的区间。对应实现见 [`data_preprocess/text/cpt_reasoning_mix.py`](data_preprocess/text/cpt_reasoning_mix.py) 和 [`train/grpo/arc.py`](train/grpo/arc.py)。
+
+具体奖励可以写成下面这组分段式。`C` 表示答案选项正确，`B` 表示最终答案是合法的 `\boxed{A/B/C/D}`，`H` 表示总生成长度达到上限保护区（训练上限 350 token，代码从 340 token 开始判定），`L` 是完整 thought 边界内的 token 数。
+
+| 条件 | 奖励 `R` |
+| --- | ---: |
+| `H`：总生成长度达到保护区 | `-1.0` |
+| `非 H`，答案正确且 boxed 格式合法 | `1.0 + clip(1.2 × b(L), -0.5, 1.0)` |
+| `非 H`，答案正确但 boxed 格式不合法 | `0.2` |
+| `非 H`，答案错误 | `-1.0` |
+
+有完整 thought 边界时，长度项 `b(L)` 为：
+
+| thought 长度 `L` | `b(L)` |
+| --- | ---: |
+| `0 ≤ L ≤ 60` | `-0.5 + 0.5 × L / 60` |
+| `60 < L ≤ 250` | `0.5 × (L - 60) / 190` |
+| `250 < L < 380` | `0.5 - (L - 250) / 130` |
+| `L ≥ 380` | `-0.5` |
+
+没有生成完整 thought 边界时不计算长度项，即按 `b = 0` 处理。因而规范且正确的回答基础奖励是 1.0，合适长度最高约为 1.6；只答对但没有合法 boxed 格式是 0.2；答案错误或撞到输出上限都是 -1.0。`380` 是长度函数自身的兜底阈值，当前 350-token 训练预算下会先触发 340-token 的上限保护。
 ## 结果
 
 | 任务 | 方法 | 基线 | 最终结果 | 提升 |

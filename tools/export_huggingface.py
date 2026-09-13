@@ -38,6 +38,33 @@ def write_remote_code(output: Path) -> None:
     )
 
 
+def install_thinking_switch(template_path: Path) -> None:
+    """Add the opt-in reasoning protocol to an exported chat template."""
+    if not template_path.is_file():
+        raise FileNotFoundError(f"Tokenizer chat template is missing: {template_path}")
+    text = template_path.read_text(encoding="utf-8")
+    if "set enable_thinking =" in text:
+        return
+    marker = (
+        "{%- endif %}\n"
+        "{{- '<|im_start|>system\\n' + system_message if system_message or tools }}"
+    )
+    replacement = (
+        "{%- endif %}\n"
+        "{%- set enable_thinking = enable_thinking if enable_thinking is defined else false %}\n"
+        "{%- if enable_thinking %}\n"
+        "  {%- set thinking_prompt = 'Think step by step inside <|thought_start|> and "
+        "<|thought_end|>. Then provide final answer.' %}\n"
+        "  {%- set system_message = system_message + ('\\n' if system_message else '') "
+        "+ thinking_prompt %}\n"
+        "{%- endif %}\n"
+        "{{- '<|im_start|>system\\n' + system_message if system_message or tools }}"
+    )
+    if text.count(marker) != 1:
+        raise RuntimeError("Cannot locate the system-message block in chat_template.jinja")
+    template_path.write_text(text.replace(marker, replacement, 1), encoding="utf-8")
+
+
 def copy_tokenizer(source: Path, output: Path) -> None:
     copied = 0
     for name in TOKENIZER_FILES:
@@ -47,6 +74,7 @@ def copy_tokenizer(source: Path, output: Path) -> None:
             copied += 1
     if not copied:
         raise FileNotFoundError(f"No tokenizer files found in {source}")
+    install_thinking_switch(output / "chat_template.jinja")
 
 
 def normalize_checkpoint(source: Path, destination: Path) -> dict:
@@ -100,6 +128,19 @@ model = AutoModelForCausalLM.from_pretrained(
         "",
         usage,
     ]
+    if model_kind != "vlm":
+        body += [
+            "## Reasoning mode",
+            "",
+            "For mathematics or multi-step reasoning, pass `enable_thinking=True` to the bundled chat template:",
+            "",
+            "```python",
+            "inputs = tokenizer.apply_chat_template(messages, enable_thinking=True, add_generation_prompt=True, return_tensors=\"pt\")",
+            "```",
+            "",
+            "The template inserts the training-time reasoning protocol automatically. Omit the option or set it to `False` for ordinary chat. Do not add new special tokens or resize the embeddings.",
+            "",
+        ]
     if model_kind == "vlm":
         body += [
             "## Vision encoder",

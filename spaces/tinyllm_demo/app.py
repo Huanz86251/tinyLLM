@@ -30,7 +30,7 @@ def load_runtime():
 
 
 @spaces.GPU(duration=45)
-def respond(message: str, history: list[dict], max_new_tokens: int):
+def respond(message: str, history: list[dict], max_new_tokens: int, thinking_mode: bool):
     if not message.strip():
         yield "请输入一个问题。"
         return
@@ -45,6 +45,7 @@ def respond(message: str, history: list[dict], max_new_tokens: int):
         prompt = tokenizer.apply_chat_template(
             messages,
             tokenize=False,
+            enable_thinking=thinking_mode,
             add_generation_prompt=True,
         )
         inputs = {
@@ -85,14 +86,19 @@ with gr.Blocks(title="tinyLLM 0.51B") as demo:
         "从零训练的中英双语小模型。这里在线运行公开的 0.51B SFT checkpoint。"
     )
     max_tokens = gr.Slider(32, 256, value=128, step=32, label="Maximum new tokens")
+    thinking_mode = gr.Checkbox(
+        value=False,
+        label="Thinking mode（数学或多步推理）",
+        info="自动使用训练时的思维协议；普通聊天建议关闭。",
+    )
     gr.ChatInterface(
         fn=respond,
-        additional_inputs=[max_tokens],
+        additional_inputs=[max_tokens, thinking_mode],
         type="messages",
         examples=[
-            ["用两句话介绍一下你自己。", 128],
-            ["What is 12 minus 5? Give a short answer.", 96],
-            ["Write three bullet points about small language models.", 160],
+            ["用两句话介绍一下你自己。", 128, False],
+            ["What is 12 minus 5? Give a short answer.", 96, True],
+            ["Write three bullet points about small language models.", 160, False],
         ],
         cache_examples=False,
         concurrency_limit=1,

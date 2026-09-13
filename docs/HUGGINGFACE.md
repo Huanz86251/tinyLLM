@@ -19,6 +19,56 @@ model = AutoModelForCausalLM.from_pretrained(
 )
 ```
 
+### Reasoning mode
+
+The SFT checkpoint uses ordinary chat mode by default. For mathematics or other
+multi-step tasks, pass `enable_thinking=True` to the bundled chat template. It
+automatically inserts the same reasoning protocol used during training and
+evaluation.
+
+```python
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+model_id = "chris0809/tinyLLM-0.51B-SFT"
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+model = AutoModelForCausalLM.from_pretrained(
+    model_id,
+    trust_remote_code=True,
+    dtype="auto",
+    device_map="auto",
+).eval()
+
+messages = [{
+    "role": "user",
+    "content": (
+        "A box contains 12 red balls and 8 blue balls. How many balls are there?\n"
+        "Put your final answer in LaTeX boxed form like $\\boxed{answer}$."
+    ),
+}]
+inputs = tokenizer.apply_chat_template(
+    messages,
+    enable_thinking=True,
+    add_generation_prompt=True,
+    return_tensors="pt",
+).to(model.device)
+with torch.inference_mode():
+    output = model.generate(
+        inputs,
+        max_new_tokens=640,
+        do_sample=False,
+        repetition_penalty=1.08,
+        no_repeat_ngram_size=16,
+    )
+print(tokenizer.decode(output[0, inputs.shape[-1]:], skip_special_tokens=True))
+```
+
+Omit `enable_thinking` or set it to `False` for ordinary chat. Internally, the
+template inserts the trained `<|thought_start|> ... <|thought_end|>` protocol.
+Those boundaries are encoded as multiple existing tokenizer pieces, so do not
+register new special tokens or resize the embedding matrix. The boxed-answer
+suffix is useful for GSM8K/ARC-style evaluation and is optional in normal chat.
+
 tinyLLM is a custom architecture, so `trust_remote_code=True` is required. The
 repository contains its configuration and model implementation; callers do not
 need to clone the GitHub project first.
