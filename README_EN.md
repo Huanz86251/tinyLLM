@@ -11,11 +11,16 @@
   <a href="https://huggingface.co/spaces/chris0809/tinyLLM-Demo"><img alt="Hugging Face demo" src="https://img.shields.io/badge/%F0%9F%A4%97-live_demo-ffd21e"></a>
 </p>
 
-<p align="center">
-  <img src="assets/showcase/tinyllm-vlm-demo.gif" width="920" alt="tinyLLM local multimodal demo">
-</p>
-
-<p align="center"><i>A real local VLM run: five-view image encoding, streaming output, and decoding guards on Windows.</i></p>
+<table>
+  <tr>
+    <td width="50%" align="center"><img src="assets/showcase/tinyllm-thinking-demo.gif" width="560" alt="tinyLLM SFT mode switching, mathematical reasoning, and Python"></td>
+    <td width="50%" align="center"><img src="assets/showcase/tinyllm-vlm-demo.gif" width="560" alt="tinyLLM model switching and local VLM demo"></td>
+  </tr>
+  <tr>
+    <td align="center"><b>SFT text capabilities</b><br><sub>One SFT base: mode switching, mathematical reasoning, and tested Python code</sub></td>
+    <td align="center"><b>VLM image question answering</b><br><sub>Model switching, five-view encoding, and repetition guards</sub></td>
+  </tr>
+</table>
 
 **tinyLLM is a 0.51B bilingual small language model trained from scratch.** The repository covers base pretraining, continued pretraining, supervised fine-tuning, GRPO, on-policy distillation, LoRA adapters, vision-language alignment, evaluation, and a local web demo. It is built for studying the full training stack of a tiny LLM instead of wrapping an existing pretrained model.
 
@@ -25,10 +30,6 @@
 Keywords: **0.5B model**, small language model, tiny LLM, LLM from scratch, Chinese LLM, bilingual LLM, GRPO, on-policy distillation, knowledge distillation, LoRA, multimodal LLM, vision-language model, local inference.
 
 ## Results
-
-<p align="center">
-  <img src="assets/showcase/alignment-results.png" width="920" alt="tinyLLM alignment results">
-</p>
 
 | Evaluation | Method | Base | Aligned | Gain |
 | --- | --- | ---: | ---: | ---: |
@@ -126,6 +127,14 @@ inputs = tokenizer.apply_chat_template(
 - [tinyLLM-0.51B-IFEval-OPD](https://huggingface.co/chris0809/tinyLLM-0.51B-IFEval-OPD)
 - [tinyLLM-0.51B-VLM](https://huggingface.co/chris0809/tinyLLM-0.51B-VLM)
 - [Baidu Netdisk mirror](https://pan.baidu.com/s/1rpM9mtMbtyq01GluLk72NA?pwd=tjda), extraction code `tjda`
+
+## Training curves
+
+<p align="center">
+  <img src="assets/showcase/alignment-results.png" width="640" alt="tinyLLM alignment results">
+</p>
+
+The figure is generated from the retained TensorBoard scalars and full evaluation results. It shows the ARC GRPO trajectory and the before/after ARC and IFEval scores from the shared SFT base.
 
 ## Scope
 

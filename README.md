@@ -11,11 +11,17 @@
   <a href="https://huggingface.co/spaces/chris0809/tinyLLM-Demo"><img alt="Hugging Face demo" src="https://img.shields.io/badge/%F0%9F%A4%97-%E5%9C%A8%E7%BA%BF_Demo-ffd21e"></a>
 </p>
 
-<p align="center">
-  <img src="assets/showcase/tinyllm-vlm-demo.gif" width="920" alt="tinyLLM 本地多模态演示">
-</p>
+<table>
+  <tr>
+    <td width="50%" align="center"><img src="assets/showcase/tinyllm-thinking-demo.gif" width="560" alt="tinyLLM SFT 模式切换、数学思维与 Python"></td>
+    <td width="50%" align="center"><img src="assets/showcase/tinyllm-vlm-demo.gif" width="560" alt="tinyLLM 模型切换与本地多模态演示"></td>
+  </tr>
+  <tr>
+    <td align="center"><b>SFT 文本能力</b><br><sub>同一 SFT 基座：模式切换、数学思维与通过测试的 Python 代码</sub></td>
+    <td align="center"><b>VLM 图片问答</b><br><sub>切换模型、五视图编码与防循环解码</sub></td>
+  </tr>
+</table>
 
-<p align="center"><i>本机真实运行：五视图图片编码、流式输出和小模型防循环解码。</i></p>
 tinyLLM 是一套从零搭建并训练的 0.51B 中英双语小模型，也可以理解成一个从头训练的 **0.5B small language model / bilingual LLM**。项目从 decoder-only Transformer 开始，完整做了预训练、继续预训练、SFT、GRPO、On-Policy Distillation（OPD）和视觉语言训练，最后做成了一个可以在 Windows 16GB 显卡上运行的网页 Demo。
 
 最初只是想把一个小模型真正训出来，后来陆续补了数学、代码、长上下文、强化学习和视觉。中间踩过不少坑，比如小模型循环解码、教师和学生思维格式不一致、视觉数据偏英文和 OCR、混合 loss 被通用回放压住等。这些问题最后都落到了代码里，而不是只留一个训练结果。
@@ -23,9 +29,6 @@ tinyLLM 是一套从零搭建并训练的 0.51B 中英双语小模型，也可�
 > **在线体验：[Hugging Face Demo](https://huggingface.co/spaces/chris0809/tinyLLM-Demo)**<br>
 > 免费 ZeroGPU 第一次打开可能需要排队，适合快速体验 SFT 文本模型。图片输入和多 LoRA 切换请使用本地 Demo。
 
-<p align="center">
-  <img src="assets/showcase/alignment-results.png" width="920" alt="tinyLLM 对齐训练结果">
-</p>
 ## 结果
 
 | 任务 | 方法 | 基线 | 最终结果 | 提升 |
@@ -415,6 +418,14 @@ python -m compileall -q .
 python -m unittest tests.test_decoding_safety tests.test_grpo_reward_regression -v
 ```
 
+## 训练曲线
+
+<p align="center">
+  <img src="assets/showcase/alignment-results.png" width="640" alt="tinyLLM 对齐训练结果">
+</p>
+
+这张图直接整理自保留下来的 TensorBoard 标量和完整评测结果，用来快速查看 ARC GRPO 的训练走势，以及 ARC、IFEval 在同一 SFT 底座上的前后变化。
+
 0.51B 的容量更适合短数学题、格式约束、常见物体和场景描述。密集表格 OCR、很长的复杂推理和多图联合理解不是这版模型的重点，Demo 主要展示从训练、对齐到本地部署的完整流程。
 
-VLM 版本还有一点小模型常见的能力遗忘。20% 的中英文文本回放可以保住日常聊天，但没有完全保住代码这类低频能力：例如 SFT 基座可以直接写出 Python 的二叉树前序遍历，VLM 版本偶尔只会解释思路，代码不够完整。受训练时间和预算限制，第二轮视觉训练使用了相对积极的学习率，也没有再补一段低学习率的纯文本巩固。后续如果继续训练，会增加代码和推理回放，并在视觉收敛后加一轮更低学习率的短阶段。
+VLM 版本还有一点小模型常见的能力遗忘。20% 的中英文文本回放可以保住日常聊天，但没有完全保住代码这类低频能力：例如 SFT 基座可以稳定写出阶乘这类简单 Python 函数，但二叉树遍历这类稍复杂的递归代码仍不稳定；VLM 版本在代码任务上还会进一步退化，有时只解释思路，代码不够完整。受训练时间和预算限制，第二轮视觉训练使用了相对积极的学习率，也没有再补一段低学习率的纯文本巩固。后续如果继续训练，会增加代码和推理回放，并在视觉收敛后加一轮更低学习率的短阶段。
