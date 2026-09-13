@@ -1,6 +1,22 @@
 # tinyLLM
 
-tinyLLM 是一套从零搭建并训练的 0.51B 中英双语小模型。项目从 decoder-only Transformer 开始，完整做了预训练、继续预训练、SFT、GRPO、On-Policy Distillation（OPD）和视觉语言训练，最后做成了一个可以在 Windows 16GB 显卡上运行的网页 Demo。
+<p align="center">
+  <b>简体中文</b> · <a href="README_EN.md">English</a>
+</p>
+
+<p align="center">
+  <img alt="model size" src="https://img.shields.io/badge/model-0.51B-5b5ce2">
+  <img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-2.x-ee4c2c">
+  <img alt="language" src="https://img.shields.io/badge/language-%E4%B8%AD%E6%96%87%20%2B%20English-20b486">
+  <a href="https://huggingface.co/spaces/chris0809/tinyLLM-Demo"><img alt="Hugging Face demo" src="https://img.shields.io/badge/%F0%9F%A4%97-%E5%9C%A8%E7%BA%BF_Demo-ffd21e"></a>
+</p>
+
+<p align="center">
+  <img src="assets/showcase/tinyllm-vlm-demo.gif" width="920" alt="tinyLLM 本地多模态演示">
+</p>
+
+<p align="center"><i>本机真实运行：五视图图片编码、流式输出和小模型防循环解码。</i></p>
+tinyLLM 是一套从零搭建并训练的 0.51B 中英双语小模型，也可以理解成一个从头训练的 **0.5B small language model / bilingual LLM**。项目从 decoder-only Transformer 开始，完整做了预训练、继续预训练、SFT、GRPO、On-Policy Distillation（OPD）和视觉语言训练，最后做成了一个可以在 Windows 16GB 显卡上运行的网页 Demo。
 
 最初只是想把一个小模型真正训出来，后来陆续补了数学、代码、长上下文、强化学习和视觉。中间踩过不少坑，比如小模型循环解码、教师和学生思维格式不一致、视觉数据偏英文和 OCR、混合 loss 被通用回放压住等。这些问题最后都落到了代码里，而不是只留一个训练结果。
 
@@ -45,6 +61,9 @@ ARC 的 GRPO 阶段再强化这件事，但不是简单奖励输出越长越好�
 | `L ≥ 380` | `-0.5` |
 
 没有生成完整 thought 边界时不计算长度项，即按 `b = 0` 处理。因而规范且正确的回答基础奖励是 1.0，合适长度最高约为 1.6；只答对但没有合法 boxed 格式是 0.2；答案错误或撞到输出上限都是 -1.0。`380` 是长度函数自身的兜底阈值，当前 350-token 训练预算下会先触发 340-token 的上限保护。
+<p align="center">
+  <img src="assets/showcase/alignment-results.png" width="920" alt="tinyLLM 对齐训练结果">
+</p>
 ## 结果
 
 | 任务 | 方法 | 基线 | 最终结果 | 提升 |
